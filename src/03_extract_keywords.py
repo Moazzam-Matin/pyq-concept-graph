@@ -53,30 +53,28 @@ def extract_terms(text):
     return terms
 
 
-df = pd.read_csv("output/01_cleaned.csv")
+if __name__ == "__main__":
+    df = pd.read_csv("output/01_cleaned.csv")
 
-df["Terms"] = df["Clean_Text"].apply(extract_terms)
+    df["Terms"] = df["Clean_Text"].apply(extract_terms)
 
-#print(df[["Clean_Text", "Terms"]].head(3).to_string())
+    #print(df[["Clean_Text", "Terms"]].head(3).to_string())
 
-df.to_pickle("output/02_terms.pkl")
-print("\nSaved to output/02_terms.pkl")
+    df.to_pickle("output/02_terms.pkl")
+    print("\nSaved to output/02_terms.pkl")
 
+    all_terms = [term for term_list in df["Terms"] for term in term_list]
+    freq = Counter(all_terms)
 
+    print("\nTotal unique terms:", len(freq))
+    print("\nTop 50 most frequent terms:")
+    for term, count in freq.most_common(100):
+        print(f"  {term}: {count}")
 
-all_terms = [term for term_list in df["Terms"] for term in term_list]
-freq = Counter(all_terms)
+    sorted_terms = freq.most_common()  # no number = ALL terms, sorted by frequency, highest first
 
-print("\nTotal unique terms:", len(freq))
-print("\nTop 50 most frequent terms:")
-for term, count in freq.most_common(100):
-    print(f"  {term}: {count}")
+    with open("output/all_terms.txt", "w") as f:
+        for term, count in sorted_terms:
+            f.write(f"{term}: {count}\n")
 
-
-sorted_terms = freq.most_common()  # no number = ALL terms, sorted by frequency, highest first
-
-with open("output/all_terms.txt", "w") as f:
-    for term, count in sorted_terms:
-        f.write(f"{term}: {count}\n")
-
-print(f"\nWrote {len(sorted_terms)} unique terms to output/all_terms.txt")
+    print(f"\nWrote {len(sorted_terms)} unique terms to output/all_terms.txt")

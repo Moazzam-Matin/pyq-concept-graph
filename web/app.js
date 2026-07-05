@@ -9,19 +9,64 @@ const container = svg.append("g");
 // We declare "label" here, outside the fetch, using `let` (not `const`),
 // specifically so our zoom handler below can reference it even though
 // it won't actually be created until the data finishes loading further down
-let label;
+let node, link, label;
+
+// Shared state used by both the zoom handler and the search highlight logic,
+// so the two don't fight over whether a label should be visible.
+let currentZoomK = 1;
+let activeMatches = null;
+
+function updateLabelVisibility() {
+  const visibilityThreshold = 14 / currentZoomK; // shrinks as you zoom in
+  label.style("display", d => {
+    if (activeMatches && activeMatches.has(d.id)) return "block"; // matched labels always show
+    return d._radius >= visibilityThreshold ? "block" : "none";
+  });
+}
+
+function applyHighlight(matchedTerms) {
+  activeMatches = matchedTerms === null ? null : new Set(matchedTerms);
+  const hasSearch = activeMatches !== null;
+
+  node
+    .attr("opacity", d => (!hasSearch || activeMatches.has(d.id)) ? 1 : 0.15)
+    .attr("stroke-width", d => (hasSearch && activeMatches.has(d.id)) ? 3 : 1);
+
+  link.attr("stroke-opacity", d =>
+    (!hasSearch || (activeMatches.has(d.source.id) && activeMatches.has(d.target.id))) ? 0.25 : 0.03
+  );
+
+  label.attr("fill", d => (hasSearch && activeMatches.has(d.id)) ? "#ffffff" : "#666");
+
+  updateLabelVisibility();
+}
+
+async function runSearch(query) {
+  if (!query.trim()) {
+    applyHighlight(null);
+    return;
+  }
+
+  const response = await fetch("http://127.0.0.1:8001/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: query }),
+  });
+
+  const data = await response.json();
+  applyHighlight(data.terms);
+}
 
 const zoomBehavior = d3.zoom()
   .scaleExtent([0.2, 8])
   .on("zoom", (event) => {
     container.attr("transform", event.transform);
+    currentZoomK = event.transform.k;
 
     // Only try to update labels if they've actually been created yet
     // (guards against this running before our fetch() below finishes)
     if (label) {
-      const k = event.transform.k;
-      const visibilityThreshold = 14 / k; // shrinks as you zoom in
-      label.style("display", d => (d._radius >= visibilityThreshold ? "block" : "none"));
+      updateLabelVisibility();
     }
   });
 
@@ -50,7 +95,7 @@ fetch("../output/graph_colored.json")
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collide", d3.forceCollide(d => d._radius + 2));
 
-    const link = container.append("g")
+    link = container.append("g")
     .selectAll("path")
     .data(data.edges)
     .join("path")
@@ -59,7 +104,7 @@ fetch("../output/graph_colored.json")
     .attr("stroke-opacity", 0.25)
     .attr("stroke-width", d => Math.min(Math.sqrt(d.weight) * 0.5, 3));
 
-    const node = container.append("g")
+    node = container.append("g")
       .selectAll("circle")
       .data(data.nodes)
       .join("circle")
@@ -96,3 +141,15 @@ fetch("../output/graph_colored.json")
         .attr("y", d => d.y);
     });
   });
+
+document.getElementById("search-btn").addEventListener("click", () => {
+  const query = document.getElementById("search-input").value;
+  runSearch(query);
+});
+
+document.getElementById("search-input").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    const query = event.target.value;
+    runSearch(query);
+  }
+});
