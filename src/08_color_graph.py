@@ -14,7 +14,7 @@ term_to_subject = subjects_df.set_index("Term")["Dominant_Subject"].to_dict()
 color_map = {
     "physics": "#3B82F6",     # blue
     "chemistry": "#10B981",   # green
-    "mathematics": "#8B5CF6", # purple
+    "mathematics": "#F59E0B", # amber/orange
 }
 
 for node in graph["nodes"]:

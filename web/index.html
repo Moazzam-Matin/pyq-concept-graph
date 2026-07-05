@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PYQ Concept Graph</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app">
+
+    <aside id="sidebar">
+      <h2>Exams</h2>
+      <button class="exam-btn active" data-exam="jee-advanced">JEE Advanced</button>
+      <button class="exam-btn disabled" disabled>JEE Mains <span>(coming soon)</span></button>
+      <button class="exam-btn disabled" disabled>NEET <span>(coming soon)</span></button>
+    </aside>
+
+    <main id="graph-area">
+      <svg id="graph"></svg>
+    </main>
+
+    <div id="search-bar">
+      <input type="text" id="search-input" placeholder="Type a question or topic...">
+      <button id="search-btn">Search</button>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PYQ Concept Graph</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  body { margin: 0; font-family: sans-serif; background: #111; color: #eee; }
+  #info { padding: 10px 14px; font-size: 14px; color: #aaa; }
+  svg { width: 100%; height: 92vh; display: block; }
+  text { font-size: 10px; fill: #eee; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="info">Loading graph...</div>
+<svg id="graph"></svg>
+
+<script>
+fetch("../output/graph_prototype.json")
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById("info").textContent =
+      data.nodes.length + " nodes, " + data.edges.length + " edges";
+
+    const width = window.innerWidth;
+    const height = window.innerHeight * 0.9;
+
+    const svg = d3.select("#graph")
+      .attr("viewBox", [0, 0, width, height]);
+
+    // Node radius scales with frequency: sqrt keeps area (not just radius)
+    // proportional to frequency, which is the mathematically correct way
+    // to represent "bigger number = bigger circle" without exaggerating it
+    const radiusScale = d3.scaleSqrt()
+      .domain([1, d3.max(data.nodes, d => d.freq)])
+      .range([5, 30]);
+
+    // The force simulation: this is the actual "magnet" physics engine
+    const simulation = d3.forceSimulation(data.nodes)
+      .force("link", d3.forceLink(data.edges)
+        .id(d => d.id)
+        .distance(d => 150 - Math.min(d.weight * 5, 120))  // stronger co-occurrence = shorter distance
+        .strength(d => Math.min(d.weight / 15, 1)))         // stronger co-occurrence = stronger pull
+      .force("charge", d3.forceManyBody().strength(-100))   // nodes repel each other, so they spread out
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collide", d3.forceCollide(d => radiusScale(d.freq) + 3)); // prevent circles overlapping
+
+    // Draw edges as lines
+    const link = svg.append("g")
+      .selectAll("line")
+      .data(data.edges)
+      .join("line")
+      .attr("stroke", "#555")
+      .attr("stroke-width", d => Math.min(Math.sqrt(d.weight), 5));
+
+    // Draw nodes as circles
+    const node = svg.append("g")
+      .selectAll("circle")
+      .data(data.nodes)
+      .join("circle")
+      .attr("r", d => radiusScale(d.freq))
+      .attr("fill", d => d.color);
+
+    // Draw labels
+    const label = svg.append("g")
+      .selectAll("text")
+      .data(data.nodes)
+      .join("text")
+      .text(d => d.id)
+      .attr("text-anchor", "middle")
+      .attr("dy", d => radiusScale(d.freq) + 10);
+
+    // On every simulation "tick" (physics update), reposition everything
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+
+      label
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+    });
+  });
+</script>
+</body>
+</html>
