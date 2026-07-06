@@ -65,7 +65,7 @@ async function runSearch(query) {
     return;
   }
 
-  const response = await fetch("http://127.0.0.1:8001/search", {
+  const response = await fetch("https://pyq-concept-graph.onrender.com/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query: query }),
@@ -91,7 +91,7 @@ const zoomBehavior = d3.zoom()
 
 svg.call(zoomBehavior);
 
-fetch("../output/graph_colored.json")
+fetch("graph_colored.json")
   .then(response => response.json())
   .then(data => {
     console.log("Loaded:", data.nodes.length, "nodes,", data.edges.length, "edges");
