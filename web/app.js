@@ -24,6 +24,23 @@ function updateLabelVisibility() {
   });
 }
 
+function renderResultsPanel(results) {
+  const panel = document.getElementById("results-panel");
+  panel.innerHTML = ""; // clear any previous results
+
+  if (!results || results.length === 0) return;
+
+  results.forEach(r => {
+    const chip = document.createElement("div");
+    chip.className = "result-chip";
+    chip.innerHTML = `
+      <span class="term-name">${r.term}</span>
+      <span class="term-stat">${r.recurrence_pct}% of years (${r.years_count}/19) · last ${r.last_year}</span>
+    `;
+    panel.appendChild(chip);
+  });
+}
+
 function applyHighlight(matchedTerms) {
   activeMatches = matchedTerms === null ? null : new Set(matchedTerms);
   const hasSearch = activeMatches !== null;
@@ -44,6 +61,7 @@ function applyHighlight(matchedTerms) {
 async function runSearch(query) {
   if (!query.trim()) {
     applyHighlight(null);
+    renderResultsPanel(null);
     return;
   }
 
@@ -55,6 +73,7 @@ async function runSearch(query) {
 
   const data = await response.json();
   applyHighlight(data.terms);
+  renderResultsPanel(data.results);
 }
 
 const zoomBehavior = d3.zoom()
