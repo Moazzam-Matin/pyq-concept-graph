@@ -8,6 +8,27 @@ from nltk.stem import WordNetLemmatizer
 
 from collections import Counter
 
+import os
+
+NLTK_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "nltk_data")
+NLTK_DATA_DIR = os.path.abspath(NLTK_DATA_DIR)
+nltk.data.path.append(NLTK_DATA_DIR)
+
+_REQUIRED_RESOURCES = {
+    "tokenizers/punkt": "punkt",
+    "tokenizers/punkt_tab": "punkt_tab",
+    "taggers/averaged_perceptron_tagger": "averaged_perceptron_tagger",
+    "taggers/averaged_perceptron_tagger_eng": "averaged_perceptron_tagger_eng",
+    "corpora/stopwords": "stopwords",
+    "corpora/wordnet": "wordnet",
+}
+
+for resource_path, package_name in _REQUIRED_RESOURCES.items():
+    try:
+        nltk.data.find(resource_path)
+    except LookupError:
+        nltk.download(package_name, download_dir=NLTK_DATA_DIR, quiet=True)
+
 stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 noun_tags = ("NN", "NNS", "NNP", "NNPS")
