@@ -105,7 +105,7 @@ Open `http://localhost:8000/web/index.html`.
 - [x] Interactive force-directed concept graph, colored by subject
 - [x] Live search with historical recurrence stats
 - [ ] Sequential ("reading") highlight animation on search
-- [ ] Public deployment
+- [x] Public deployment
 - [ ] JEE Mains data
 - [ ] NEET data
 
